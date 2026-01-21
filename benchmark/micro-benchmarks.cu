@@ -88,13 +88,19 @@ private:
 
 template <typename T, typename ColumnT>
 verification::ExecutionResult<T> decompress_column(const ColumnT column, const ProgramParameters params) {
+	printf("starting gpu version...\n");
+	printf("n_values: %zu\n", params.n_values);
 	auto     column_device = column.copy_to_device();
+	printf("gpu version running!");
 	const T* out           = bindings::decompress_column<T, typename ColumnT::DeviceColumnT>(
         column_device, params.unpack_n_vecs, params.unpack_n_vals, params.unpacker, params.patcher, params.n_samples);
 	flsgpu::host::free_column(column_device);
+	printf("gpu version finished and cpu version running!");
 
 	const T* correct_out = data::bindings::decompress(column);
+	printf("cpu version finished!");
 	auto     result      = verification::compare_data(correct_out, out, params.n_values);
+	printf("comparison finished!");
 	delete correct_out;
 	delete out;
 	return result;
@@ -142,6 +148,7 @@ template <typename T, typename ColumnT>
 verification::ExecutionResult<T>
 execute_kernel(const ColumnT column, const ProgramParameters params, const bool query_result, const T magic_value) {
 	if (params.kernel == enums::Kernel::Decompress) {
+		printf("decompressing...\n");
 		return decompress_column<T, ColumnT>(column, params);
 	} else if (params.kernel == enums::Kernel::Query) {
 		return query_column<T, ColumnT>(column, params, query_result, magic_value);
@@ -183,13 +190,14 @@ std::vector<verification::ExecutionResult<T>> execute_ffor(const ProgramParamete
 		}
 
 		results.push_back(execute_kernel<T, flsgpu::host::FFORColumn<T>>(column, params, query_result, magic_value));
-
+		printf("finished ffor exec\n");
 		flsgpu::host::free_column(column);
 
 		if (params.kernel == enums::Kernel::QueryMultiColumn) {
 			break;
 		}
 	}
+	printf("finished ffor all exec\n");
 
 	return results;
 }
@@ -243,6 +251,17 @@ int main(int argc, char** argv) {
 
 	int32_t exit_code   = 0;
 	bool    print_debug = params.print_option != enums::Print::PrintNothing;
+	if(print_debug){
+		printf(" Running micro-benchmark with parameters:\n");
+		printf("  Unpack n vecs: %u\n", params.unpack_n_vecs);
+		printf("  Unpack n vals: %u\n", params.unpack_n_vals);
+		printf("  Bit width range: [%u, %u]\n", params.bit_width_range.min, params.bit_width_range.max);
+		printf("  Exception count range: [%u, %u]\n",
+			params.ec_range.min,
+			params.ec_range.max);
+		printf("  N values: %zu\n", params.n_values);
+		printf("  N samples: %u\n", params.n_samples);
+	}
 	switch (params.data_type) {
 	case enums::DataType::U32:
 		exit_code = verification::process_results(execute_ffor<uint32_t>(params), print_debug);

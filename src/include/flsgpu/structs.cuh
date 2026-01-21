@@ -115,6 +115,17 @@ struct BPColumn {
 	size_t* vector_offsets;
 
 	device::BPColumn<T> copy_to_device() const {
+		printf("BPColumn n_values=%zu n_vecs=%zu n_packed_values=%zu packed_array=%p bit_widths=%p vector_offsets=%p\n",
+			n_values, get_n_vecs(), n_packed_values,
+			(void*)packed_array, (void*)bit_widths, (void*)vector_offsets);
+		fflush(stdout);
+
+		if (n_packed_values > (1ULL<<30)) {  // 随便设个上限，比如 1G elements，肯定不正常
+			fprintf(stderr, "n_packed_values is insane -> ABI mismatch or uninitialized\n");
+			abort();
+		}
+
+		// printf("Copying BPColumn to device, n_values: %zu, n_vecs: %zu\n", get_n_values(), get_n_vecs());
 		const size_t branchless_extra_access_buffer = sizeof(T) * utils::get_n_lanes<T>() * 4;
 		return device::BPColumn<T> {
 		    n_values,
@@ -141,6 +152,7 @@ struct FFORColumn {
 	}
 
 	device::FFORColumn<T> copy_to_device() const {
+		printf("Copying FFORColumn to device, n_values: %zu, n_vecs: %zu\n", get_n_values(), get_n_vecs());
 		return device::FFORColumn<T> {
 		    get_n_values(), bp.copy_to_device(), GPUArray<UINT_T>(bp.get_n_vecs(), bases).release()};
 	}
