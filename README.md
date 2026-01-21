@@ -49,16 +49,3 @@ After building with `-DGALP_BUILD_BENCHMARKS=ON`, executables are produced under
 ```bash
 ./micro-benchmarks u64 decompress 4 1 stateful-branchless none 32 32 200 200 4 10 1
 ```
-
----
-
-
-## Notes on dependencies
-
-### nvCOMP
-
-Ensure your nvCOMP installation provides a CMake package configuration (so `find_package(nvcomp CONFIG REQUIRED)` works) and that CMake can locate it (e.g., via default system paths or `CMAKE_PREFIX_PATH`).
-
-### Thrust / CCCL
-
-The build prefers the Thrust headers shipped with the CUDA Toolkit. A recent Thrust version is required.
