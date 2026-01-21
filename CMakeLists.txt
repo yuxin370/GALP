@@ -1,16 +1,16 @@
 cmake_minimum_required(VERSION 3.22)
 
-# 关键：让 galp 自己成为一个可配置的顶层工程（同时也兼容被 add_subdirectory）
+
 project(GALP LANGUAGES CXX CUDA)
 
-# 是否顶层构建（Standalone）
+
 set(GALP_STANDALONE OFF)
 if (CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
     set(GALP_STANDALONE ON)
 endif()
 
 # ────────────────────────────────────────────────
-# 0. Standalone 时补齐全局设置（被父工程包含时不要乱改父工程）
+# 0. Standalone build settings
 # ────────────────────────────────────────────────
 if (GALP_STANDALONE)
     set(CMAKE_CXX_STANDARD 20)
@@ -28,7 +28,7 @@ if (GALP_STANDALONE)
 endif()
 
 # ────────────────────────────────────────────────
-# 0.1 CUDA settings（尽量别用 CMAKE_CUDA_FLAGS，全局污染；但先保留你现有逻辑）
+# 0.1 CUDA settings
 # ────────────────────────────────────────────────
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 set(CMAKE_CUDA_SEPARABLE_COMPILATION ON)
@@ -118,10 +118,8 @@ if (GALP_BUILD_TESTS)
     include(CTest)
     enable_testing()
 
-    # 提供 gtest_discover_tests 宏
     include(GoogleTest)
 
-    # standalone 构建时，如果父工程没提供 gtest targets，就自己拉取
     if (NOT TARGET GTest::gtest_main)
         include(FetchContent)
         FetchContent_Declare(googletest
