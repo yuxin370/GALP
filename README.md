@@ -47,7 +47,7 @@ cmake --build . -j
 After building with `-DGALP_BUILD_BENCHMARKS=ON`, executables are produced under `build/benchmark/`. For example:
 
 ```bash
-./benchmark/micro-benchmarks u64 decompress 4 1 stateful-branchless none 32 32 200 200 4 10 1
+./micro-benchmarks u64 decompress 4 1 stateful-branchless none 32 32 200 200 4 10 1
 ```
 
 ---
